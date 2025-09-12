@@ -5,6 +5,7 @@ import jwt
 import phonenumbers
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse
+from django.http.response import Http404
 from django.views.decorators.csrf import csrf_exempt
 import django.core.exceptions as django_exception
 from django.db import IntegrityError
@@ -94,19 +95,18 @@ def login(req: WSGIRequest):
             access_token = helper.generate_access_token(found_user)
             refresh_token = helper.generate_refresh_token(found_user)
 
-            user_ref_token = RefreshToken.objects.filter(user=found_user)
-            if not user_ref_token:
-                RefreshToken.objects.create(token=refresh_token, user=found_user)
+            if getattr(found_user, 'refreshtoken', None):
+                found_user.refreshtoken.token = refresh_token
+                found_user.refreshtoken.save()
             else:
-                user_ref_token.update(token=refresh_token)
-                print(f'updated refresh token for user: {found_user.username}')
+                RefreshToken.objects.create(token=refresh_token, user=found_user)
 
             found_user = {'user_id': found_user.id, 'username': found_user.username, 'phone_number': found_user.phone_number,
                           'client_number': found_user.client_number, 'client_history': found_user.client_history}
             return JsonResponse({'user': found_user, 'access_token': access_token, 'refresh_token': refresh_token}, safe=False)
         return JsonResponse({'error': 'Method not allowed.'}, status=405)
 
-    except django_exception.ObjectDoesNotExist:
+    except (django_exception.ObjectDoesNotExist, Http404):
         return JsonResponse({'error': 'Invalid username/password.'}, status=400)
     except Exception as err:
         print(err.__str__())

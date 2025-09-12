@@ -3,12 +3,13 @@ from datetime import datetime, timedelta
 
 import jwt
 from django.core.handlers.wsgi import WSGIRequest
-from dotenv import load_dotenv
+from django.shortcuts import get_object_or_404
+
 
 from utils.models import CustomException
 from message_auth.models import User
 
-load_dotenv()
+
 jwt_sk = os.getenv("JWT_SECRET_KEY")
 if not jwt_sk:
     raise Exception('JWT Secret key error.')
@@ -26,7 +27,7 @@ black_list = []
 def generate_access_token(user):
     payload = {
         'user_id': user.id,
-        'exp': datetime.utcnow() + timedelta(minutes=10),
+        'exp': datetime.utcnow() + timedelta(days=int(os.getenv('ACCESS_EXP_DURATION'))),
         'iat': datetime.utcnow()
     }
 
@@ -36,7 +37,7 @@ def generate_access_token(user):
 def generate_refresh_token(user):
     payload = {
         'user_id': user.id,
-        'exp': datetime.utcnow() + timedelta(hours=1),
+        'exp': datetime.utcnow() + timedelta(weeks=int(os.getenv('REFRESH_EXP_DURATION'))),
         'iat': datetime.utcnow()
     }
 
@@ -71,5 +72,5 @@ def verify_token(request: WSGIRequest):
             raise CustomException('Expired token.', status=401)
         raise CustomException('Invalid token.', status=400)
 
-    user = User.objects.get(id=payload['user_id'])
+    user = get_object_or_404(User, id=payload['user_id'])
     return user

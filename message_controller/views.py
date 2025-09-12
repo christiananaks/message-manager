@@ -73,7 +73,6 @@ def post_snapshot(req: WSGIRequest):
             if found_snapshot is None:
                 # create new Snapshot
                 new_snapshot().save()
-
             else:
                 # same device but new sim_card was detected
                 if found_snapshot.sim_cards != sim_cards:
@@ -89,7 +88,7 @@ def post_snapshot(req: WSGIRequest):
 
             print('RECEIVED POST REQUEST', datetime.datetime.now())
 
-            return JsonResponse({'success': True, 'message': 'Snapshot added successfully'})
+            return JsonResponse({'success': True, 'message': 'Snapshot added successfully'}, status=201)
 
         return JsonResponse({'success': False, 'message': 'Invalid request method.'})
 

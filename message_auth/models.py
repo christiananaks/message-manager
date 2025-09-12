@@ -18,5 +18,5 @@ class User(models.Model):
 class RefreshToken(models.Model):
     objects = models.QuerySet()
     token = models.TextField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
